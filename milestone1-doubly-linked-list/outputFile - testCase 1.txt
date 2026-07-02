@@ -1,0 +1,58 @@
+
+Processing commands:
+
+
+Processing testCase1
+
+Calling isEmpty().
+isEmpty returned: 1
+Calling insertAtHead(50).
+Successfully inserted at head: 50
+Calling insertAtHead(40).
+Successfully inserted at head: 40
+Calling insertAtHead(30).
+Successfully inserted at head: 30
+Calling insertAtTail(60).
+Successfully inserted at tail: 60
+Calling insertAtTail(70).
+Successfully inserted at tail: 70
+Calling insertAtTail(80).
+Successfully inserted at tail: 80
+Calling insertAtTail(90).
+Successfully inserted at tail: 90
+Calling insertAtHead(20).
+Successfully inserted at head: 20
+Calling insertAtHead(10).
+Successfully inserted at head: 10
+Calling insertAtTail(100).
+Successfully inserted at tail: 100
+Calling isEmpty().
+isEmpty returned: 0
+
+Here are the List contents:
+Node key: 10
+Node key: 20
+Node key: 30
+Node key: 40
+Node key: 50
+Node key: 60
+Node key: 70
+Node key: 80
+Node key: 90
+Node key: 100
+End of List
+
+Here are the List contents reversed:
+Node key: 100
+Node key: 90
+Node key: 80
+Node key: 70
+Node key: 60
+Node key: 50
+Node key: 40
+Node key: 30
+Node key: 20
+Node key: 10
+End of List
+
+Successfully processed: testCase1
