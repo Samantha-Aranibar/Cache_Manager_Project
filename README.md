@@ -46,7 +46,7 @@ Cache-Manager-Project
 
 # Milestones
 
-## Milestone 1 – Doubly Linked List
+## Milestone 1 â€“ Doubly Linked List
 
 Implemented a custom doubly linked list supporting insertion, deletion, traversal, and node manipulation.
 
@@ -58,7 +58,7 @@ Topics:
 
 ---
 
-## Milestone 2 – Hash Table
+## Milestone 2 â€“ Hash Table
 
 Implemented a hash table supporting insertion, deletion, lookup, and collision management.
 
@@ -70,7 +70,7 @@ Topics:
 
 ---
 
-## Milestone 3 – Cache Manager
+## Milestone 3 â€“ Cache Manager
 
 Built a FIFO Cache Manager using the custom linked list and hash table implementations.
 
@@ -87,7 +87,7 @@ Topics:
 
 ---
 
-## Milestone 4 – Binary Search Tree
+## Milestone 4 â€“ Binary Search Tree
 
 Implemented a Binary Search Tree supporting insertion, deletion, searching, traversal, and recursive algorithms.
 
