@@ -1,0 +1,367 @@
+/**
+ * @file binary_search_tree.cpp
+ * @brief Implementation of the BinarySearchTree.
+ *
+ * This file defines all member functions declared in binary_search_tree.h.
+ * The BinarySearchTree class provides basic binary search tree operations,
+ * including insertion, removal, height and node count retrieval, and multiple
+ * traversal methods (in-order, pre-order, post-order, depth-first, and
+ * breadth-first). Each public method and internal helper maintains and updates
+ * cached values (node count and height) for efficient queries.
+ *
+ * @date 10/28/2025 - Started basic structure and helper functions.
+ * @date 10/29/2025 - Implemented add/remove and traversal logic.
+ * @date 10/30/2025 - Integrated logging and height recalculation.
+ * @date 10/31/2025 - Adjusted height logic to node-based convention.
+ * @date 11/01/2025 - Final review, added Doxygen documentation for submission.
+ * @date 11/02/2025 - Minor formatting and clarity improvements before final submission.
+ * 
+ * @author - Ayush Rangrej
+ */
+
+#include "binary_search_tree.h"
+#include "tree_node.h"
+#include "milestone4.h"
+
+#include <queue>
+#include <string>
+#include <algorithm>
+
+ /* File-local helpers */
+
+ /**
+ * @brief Safely return the number of nodes in a subtree.
+ * @param n Pointer to the subtree root (nullable).
+ * @return Number of nodes in the subtree; returns 0 if @p n is nullptr.
+ */
+static inline int getCount(TreeNode* n) { return n ? n->numberOfNodes : 0; }
+
+/**
+ * @brief Safely return the height of a subtree measured in **nodes**.
+ * @param n Pointer to the subtree root (nullable).
+ * @return Height in nodes. Returns 0 for nullptr (empty subtree).
+ */
+static inline int getHeightNodes(TreeNode* n) { return n ? n->height : 0; }
+
+/**
+ * @brief Recompute cached @c numberOfNodes and @c height (nodes) for a node.
+ *
+ * @param n Pointer to the node whose cached fields should be updated.
+ */
+static inline void updateNodeInfo(TreeNode* n) {
+    if (!n) return;
+    int lh = getHeightNodes(n->left);
+    int rh = getHeightNodes(n->right);
+    n->height = 1 + ((lh > rh) ? lh : rh);
+    n->numberOfNodes = 1 + getCount(n->left) + getCount(n->right);
+}
+
+/**
+ * @brief Find the node with the minimum key (leftmost) within a subtree.
+ * @param node Subtree root (nullable).
+ * @return Pointer to the leftmost node; returns nullptr if @p node is nullptr.
+ */
+static TreeNode* minNode(TreeNode* node) {
+    TreeNode* cur = node;
+    while (cur && cur->left) cur = cur->left;
+    return cur;
+}
+
+/**
+ * @brief Insert a key into the BST rooted at @p node (no duplicates).
+ * @param node Current subtree root (nullable).
+ * @param key  Key to insert.
+ * @return New subtree root after insertion.
+ */
+static TreeNode* insertRec(TreeNode* node, int key) {
+    if (!node) {
+        return new TreeNode(key, /*numNodes*/1, /*height*/1, nullptr, nullptr);
+    }
+    if (key < node->key) {
+        node->left = insertRec(node->left, key);
+    }
+    else if (key > node->key) {
+        node->right = insertRec(node->right, key);
+    }
+    else {
+        // duplicate: do nothing
+        return node;
+    }
+    updateNodeInfo(node);
+    return node;
+}
+
+/**
+ * @brief Remove @p key from the BST rooted at @p node.
+ *
+ * @param node    Current subtree root (nullable).
+ * @param key     Key to remove.
+ * @param removed Output flag set to true iff a node was removed.
+ * @return New subtree root after removal.
+ */
+static TreeNode* removeRec(TreeNode* node, int key, bool& removed) {
+    if (!node) { removed = false; return nullptr; }
+
+    if (key < node->key) {
+        node->left = removeRec(node->left, key, removed);
+    }
+    else if (key > node->key) {
+        node->right = removeRec(node->right, key, removed);
+    }
+    else {
+        removed = true;
+        // 0 or 1 child cases
+        if (!node->left) {
+            TreeNode* r = node->right;
+            delete node;
+            return r;
+        }
+        if (!node->right) {
+            TreeNode* l = node->left;
+            delete node;
+            return l;
+        }
+        // two children: replace with inorder successor
+        TreeNode* succ = minNode(node->right);
+        node->key = succ->key;
+        bool dummy = false;
+        node->right = removeRec(node->right, succ->key, dummy);
+    }
+    updateNodeInfo(node);
+    return node;
+}
+
+/**
+ * @brief Recursively free all nodes in the subtree rooted at @p node.
+ *
+ * @param node Subtree root to free (nullable).
+ */
+static void freeSubtree(TreeNode* node) {
+    if (!node) return;
+    freeSubtree(node->left);
+    freeSubtree(node->right);
+    delete node;
+}
+
+/**
+ * @brief Iteratively search for @p key in the BST rooted at @p root.
+ *
+ * @param root Root of the BST (nullable).
+ * @param key  Key to search for.
+ * @return Pointer to the node containing @p key, or nullptr if not found.
+ */
+static TreeNode* findNode(TreeNode* root, int key) {
+    TreeNode* cur = root;
+    while (cur) {
+        if (key < cur->key) cur = cur->left;
+        else if (key > cur->key) cur = cur->right;
+        else return cur;
+    }
+    return nullptr;
+}
+
+/* BinarySearchTree methods */
+
+BinarySearchTree::BinarySearchTree() : root(nullptr) {}
+
+/**
+ * @brief Destructor: clears the entire tree.
+ *
+ * @post After this runs, all nodes managed by the instance are freed.
+ */
+BinarySearchTree::~BinarySearchTree() {
+    clear();
+}
+
+/**
+ * @brief Insert a key into the BST (no duplicates).
+ *
+ * @param key Key to insert.
+ */
+void BinarySearchTree::addToTree(int key) {
+    root = insertRec(root, key);
+}
+
+/**
+ * @brief Remove a key from the BST if present.
+ *
+ * @param key Key to remove.
+ * @return true if the key existed and was removed; false otherwise.
+ */
+bool BinarySearchTree::removeNode(int key) {
+    bool removed = false;
+    root = removeRec(root, key, removed);
+    return removed;
+}
+
+/**
+ * @brief Return the height of the entire tree measured in **nodes**.
+ *
+ * @return Height in nodes; empty tree returns 0; leaf-only tree returns 1.
+ */
+int BinarySearchTree::getHeightOfTree() const {
+    return getHeightNodes(root);
+}
+
+/**
+ * @brief Return the total number of nodes currently stored in the tree.
+ *
+ * @return Non-negative node count.
+ */
+int BinarySearchTree::getNumberOfTreeNodes() const {
+    return getCount(root);
+}
+
+/**
+ * @brief Determine whether a key exists in the BST.
+ *
+ * @param key Key to search for.
+ * @return true if the key exists; false otherwise.
+ */
+bool BinarySearchTree::contains(int key) const {
+    return findNode(root, key) != nullptr;
+}
+
+/**
+ * @brief Get a pointer to the current root node.
+ *
+ * @return Pointer to the root node; may be nullptr if the tree is empty.
+ */
+TreeNode* BinarySearchTree::getRoot() const {
+    return root;
+}
+
+/**
+ * @brief Check whether the BST is empty.
+ *
+ * @return true if the tree has zero nodes; false otherwise.
+ */
+
+bool BinarySearchTree::isEmpty() const {
+    return root == nullptr;
+}
+
+/**
+ * @brief Remove all nodes from the BST.
+ */
+void BinarySearchTree::clear() {
+    deleteTree(root);
+    root = nullptr;
+}
+
+/**
+ * @brief Print the data of a specific node pointer or "NOT FOUND".
+ *
+ * @param node Node pointer to print (nullable).
+ */
+void BinarySearchTree::printNodeFromTree(TreeNode* node) const {
+    if (node == nullptr) {
+        logToFileAndConsole(std::string("NOT FOUND"));
+        return;
+    }
+    logToFileAndConsole(std::string("Node key: ") + std::to_string(node->key));
+}
+
+/**
+ * @brief Print an inorder traversal (L, N, R).
+ */
+void BinarySearchTree::printInOrder() const {
+    logToFileAndConsole(std::string("Performing In-order traversal"));
+    printInOrderHelper(root);
+}
+
+/**
+ * @brief Print a preorder traversal (N, L, R).
+ */
+void BinarySearchTree::printPreOrder() const {
+    logToFileAndConsole(std::string("Performing Pre-order traversal"));
+    printPreOrderHelper(root);
+}
+
+/**
+ * @brief Print a postorder traversal (L, R, N).
+ */
+void BinarySearchTree::printPostOrder() const {
+    logToFileAndConsole(std::string("Performing Post-order traversal"));
+    printPostOrderHelper(root);
+}
+
+/**
+ * @brief Print a depth-first listing via preorder traversal.
+ */
+void BinarySearchTree::printDepthFirst() const {
+    logToFileAndConsole(std::string("Performing Depth First via PreOrder traversal"));
+    printPreOrder();
+}
+
+/**
+ * @brief Print a breadth-first (level-order) traversal.
+ */
+void BinarySearchTree::printBreadthFirst() const {
+    logToFileAndConsole(std::string("Performing Breadth First traversal"));
+    std::queue<TreeNode*> q;
+    if (root) q.push(root);
+    while (!q.empty()) {
+        TreeNode* n = q.front(); q.pop();
+        logToFileAndConsole(std::string("Node key: ") + std::to_string(n->key));
+        if (n->left)  q.push(n->left);
+        if (n->right) q.push(n->right);
+    }
+}
+
+/**
+ * @brief Delete (free) the tree or a subtree starting at @p node.
+ *
+ * @param node Root of the subtree to delete (nullable).
+ */
+void BinarySearchTree::deleteTree(TreeNode* node) {
+    freeSubtree(node);
+}
+
+/**
+ * @brief Return the height for an arbitrary subtree in **nodes**.
+ *
+ * @param node Root of the subtree (nullable).
+ * @return Height in nodes; returns 0 if @p node is nullptr.
+ */
+int BinarySearchTree::getHeight(TreeNode* node) const {
+    return getHeightNodes(node); 
+}
+
+/* Traversal helpers */
+
+/**
+ * @brief Inorder helper (Left, Node, Right).
+ *
+ * @param node Current subtree root (nullable).
+ */
+void BinarySearchTree::printInOrderHelper(TreeNode* node) const {
+    if (!node) return;
+    printInOrderHelper(node->left);
+    logToFileAndConsole(std::string("Node key: ") + std::to_string(node->key));
+    printInOrderHelper(node->right);
+}
+
+/**
+ * @brief Preorder helper (Node, Left, Right).
+ *
+ * @param node Current subtree root (nullable).
+ */
+void BinarySearchTree::printPreOrderHelper(TreeNode* node) const {
+    if (!node) return;
+    logToFileAndConsole(std::string("Node key: ") + std::to_string(node->key));
+    printPreOrderHelper(node->left);
+    printPreOrderHelper(node->right);
+}
+
+/**
+ * @brief Postorder helper (Left, Right, Node).
+ *
+ * @param node Current subtree root (nullable).
+ */
+void BinarySearchTree::printPostOrderHelper(TreeNode* node) const {
+    if (!node) return;
+    printPostOrderHelper(node->left);
+    printPostOrderHelper(node->right);
+    logToFileAndConsole(std::string("Node key: ") + std::to_string(node->key));
+}
